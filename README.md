@@ -42,7 +42,12 @@ which keeps a solo-maintained repo simple.
 ```bash
 cp .env.example .env        # adjust if needed; defaults match docker-compose
 make setup                  # uv sync + npm install in apps/web
+make db-up                  # start local Postgres
+make migrate                # create app tables + procrastinate queue schema
 ```
+
+Set `AUTH_ALLOWED_EMAILS` in `.env` to your email so you can sign in (there is no public
+sign-up).
 
 ## Run locally
 
@@ -64,15 +69,17 @@ curl localhost:8000/healthz    # {"status":"ok"}
 curl localhost:8000/db-ping    # {"status":"ok","result":1}
 ```
 
+### Sign in locally
+
+With `make dev` running and your email in `AUTH_ALLOWED_EMAILS`, open
+<http://localhost:3000/login>, enter that email, and submit. The console email sender
+prints the login link to the api logs (the `make dev` terminal); open it to land on
+`/me` signed in.
+
 ### Worker note
 
-The worker needs its queue tables created in Postgres once before it can run:
-
-```bash
-make db-up
-uv run procrastinate --app=health_worker.app schema --apply
-make dev-worker
-```
+The worker's queue tables are created by `make migrate` (the queue schema is part of the
+Alembic migrations). After migrating, just run `make dev-worker`.
 
 ## Test, lint, format
 

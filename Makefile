@@ -1,7 +1,7 @@
 # Personal Health Agent - developer entrypoints.
 # Python is managed by uv (workspace at repo root); the web app by npm.
 
-.PHONY: setup dev dev-api dev-web dev-worker db-up db-down test lint fmt
+.PHONY: setup dev dev-api dev-web dev-worker db-up db-down migrate test lint fmt
 
 setup: ## Install all dependencies (Python workspace + web)
 	uv sync
@@ -12,6 +12,9 @@ db-up: ## Start the local Postgres container in the background
 
 db-down: ## Stop the local Postgres container
 	docker compose down
+
+migrate: ## Apply database migrations (app tables + procrastinate queue schema)
+	uv run alembic -c packages/db/alembic.ini upgrade head
 
 # `dev` brings up the database and runs the api in the foreground. Run the web app and
 # worker in separate terminals via `make dev-web` / `make dev-worker`. Keeping them as
