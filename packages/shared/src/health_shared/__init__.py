@@ -1,8 +1,21 @@
-"""Shared types, constants, and prompt templates.
+"""Shared infrastructure and types across services.
 
-Placeholder in M0. Cross-service types (e.g. ingest payload schemas) and the coach
-prompt templates from PRD Appendix A will live here starting in M1, so that the api,
-worker, and cron services share one definition rather than drifting apart.
+Holds cross-service concerns (e.g. email sending) and, later, shared types and the coach
+prompt templates from PRD Appendix A.
 """
 
-__all__: list[str] = []
+from health_shared.email import (
+    ConsoleEmailSender,
+    EmailMessage,
+    EmailSender,
+    ResendEmailSender,
+    get_email_sender,
+)
+
+__all__ = [
+    "EmailMessage",
+    "EmailSender",
+    "ConsoleEmailSender",
+    "ResendEmailSender",
+    "get_email_sender",
+]
