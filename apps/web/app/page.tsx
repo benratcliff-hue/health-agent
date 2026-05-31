@@ -50,6 +50,9 @@ export default async function Home() {
       </p>
       <ProbeCard name="API liveness" path="/healthz" result={health} />
       <ProbeCard name="Database" path="/db-ping" result={dbPing} />
+      <nav style={{ marginTop: 8 }}>
+        <a href="/login">Sign in</a> · <a href="/me">Account</a>
+      </nav>
     </main>
   );
 }
