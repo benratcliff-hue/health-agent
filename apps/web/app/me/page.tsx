@@ -52,6 +52,9 @@ export default function MePage() {
           <p>
             Signed in as <strong>{me.name}</strong> ({me.email}), role {me.role}.
           </p>
+          <p>
+            <a href="/settings/keys">Manage ingest API keys</a>
+          </p>
           <button onClick={logout} style={{ padding: "8px 16px" }}>
             Log out
           </button>
