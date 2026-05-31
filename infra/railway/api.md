@@ -4,8 +4,10 @@ FastAPI backend (`apps/api`, package `health-api`).
 
 - **Root directory:** repository root (`/`). Required so the uv workspace resolves the
   `health-db` dependency.
-- **Build command:** `uv sync --no-dev`
-- **Start command:** `uv run uvicorn health_api.main:app --host 0.0.0.0 --port $PORT`
+- **Build command:** Railpack default (`uv sync`). `uv sync --no-dev` also fine.
+- **Start command** (set in Settings -> Deploy):
+  `uv run uvicorn health_api.main:app --host 0.0.0.0 --port $PORT`
+- **Public domain target port:** `8080`.
 
 ## Environment variables
 
