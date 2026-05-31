@@ -24,6 +24,10 @@ FastAPI backend (`apps/api`, package `health-api`).
 | `COOKIE_SAMESITE` | `none` | web and api are different domains (cross-site cookie). |
 | `RESEND_API_KEY` | Resend API key | Without it the api falls back to logging emails instead of sending. |
 | `EMAIL_FROM` | sender on a verified domain | e.g. `Health Agent <login@yourdomain>`. |
+| `ENCRYPTION_KEY` | Fernet key | Encrypts stored OAuth tokens. Generate your own; do not ship the dev default. |
+| `WHOOP_CLIENT_ID` / `WHOOP_CLIENT_SECRET` | from your Whoop dev app | OAuth + token refresh + webhook signature. |
+| `WHOOP_REDIRECT_URI` | `https://<api>/v1/whoop/callback` | Must match the Whoop dev app exactly. |
+| `WHOOP_API_BASE` | `https://api.prod.whoop.com` | Default; override only for testing. |
 
 > **Cross-site cookie caveat:** with web and api on different Railway domains the session
 > cookie is third-party (`SameSite=None`), which Safari/ITP can restrict. If logins do
