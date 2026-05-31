@@ -1,0 +1,75 @@
+name: CI
+
+# Runs on PRs (the M0 requirement) and on pushes to main so the default branch
+# stays verified. Uses GitHub-hosted ubuntu runners (free tier).
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+jobs:
+  python:
+    name: Python (lint + tests)
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_USER: health
+          POSTGRES_PASSWORD: health
+          POSTGRES_DB: health
+        ports:
+          - 5432:5432
+        # Wait for Postgres to accept connections before the job's steps run.
+        options: >-
+          --health-cmd "pg_isready -U health"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 5
+    env:
+      # Set so test_db_ping actually exercises the database instead of skipping.
+      DATABASE_URL: postgresql://health:health@localhost:5432/health
+    steps:
+      - uses: actions/checkout@v4
+
+      # Install uv via its official installer (version-agnostic) rather than pinning a
+      # third-party action version we would have to chase.
+      - name: Install uv
+        run: |
+          curl -LsSf https://astral.sh/uv/install.sh | sh
+          echo "$HOME/.local/bin" >> "$GITHUB_PATH"
+
+      - name: Sync dependencies
+        run: uv sync
+
+      - name: Lint
+        run: |
+          uv run ruff check .
+          uv run ruff format --check .
+
+      - name: Test
+        run: uv run pytest
+
+  web:
+    name: Web (lint + build)
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: apps/web
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+          cache-dependency-path: apps/web/package-lock.json
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Lint
+        run: npm run lint
+
+      - name: Build
+        run: npm run build
