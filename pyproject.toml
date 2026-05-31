@@ -1,0 +1,38 @@
+# Virtual workspace root: this is not itself a package, it just ties the Python
+# members together so one `uv sync` builds a single venv with a single lockfile.
+[tool.uv.workspace]
+members = ["apps/api", "apps/worker", "packages/db", "packages/shared"]
+
+# Resolve intra-repo dependencies (e.g. health-api -> health-db) from the workspace
+# rather than PyPI.
+[tool.uv.sources]
+health-db = { workspace = true }
+health-shared = { workspace = true }
+
+[dependency-groups]
+dev = [
+    "ruff>=0.6",
+    "pytest>=8",
+    "httpx",
+]
+
+[tool.ruff]
+target-version = "py312"
+line-length = 100
+src = [
+    "apps/api/src",
+    "apps/worker/src",
+    "packages/db/src",
+    "packages/shared/src",
+]
+
+[tool.ruff.lint]
+# E/F: pyflakes + pycodestyle, I: import sorting, UP: pyupgrade, B: bugbear.
+select = ["E", "F", "I", "UP", "B"]
+
+[tool.ruff.lint.isort]
+# Our workspace packages, so the import sorter groups them as first-party.
+known-first-party = ["health_api", "health_db", "health_worker", "health_shared"]
+
+[tool.pytest.ini_options]
+testpaths = ["apps/api/tests"]
