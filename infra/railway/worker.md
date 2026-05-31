@@ -4,22 +4,29 @@ Procrastinate background worker (`apps/worker`, package `health-worker`).
 
 - **Root directory:** repository root (`/`). Required for the uv workspace.
 - **Build command:** Railpack default (`uv sync`). `uv sync --no-dev` also fine.
+- **Pre-deploy command** (Settings -> Deploy): runs migrations before the worker starts.
+  The worker is the natural home for this since its environment has health-db, alembic,
+  and procrastinate:
+
+  ```
+  uv run alembic -c packages/db/alembic.ini upgrade head
+  ```
+
 - **Start command** (set in Settings -> Deploy):
 
-```
-sh -c "uv run procrastinate --app=health_worker.app schema --apply || true; exec uv run procrastinate --app=health_worker.app worker"
-```
+  ```
+  uv run procrastinate --app=health_worker.app worker
+  ```
 
-## Schema note (M0 shortcut)
+## Migrations (M1)
 
-Procrastinate needs its queue tables created in Postgres once. The start command above
-applies the schema on first boot and harmlessly skips it on later boots (the `|| true`
-swallows the "already exists" error), then `exec`s the worker. This avoids a crash loop
-without needing CLI access for a one-off command.
+`alembic upgrade head` is idempotent and applies both the app tables and the procrastinate
+queue schema. This retires the M0 `schema --apply || true` start-command shortcut. When
+upgrading an environment that still has the M0 worker config, switch the start command to
+the plain worker above and add the pre-deploy command.
 
-In M1 this is replaced by proper migrations (Alembic for app tables, `procrastinate`
-migrations for the queue) run as a pre-deploy step, and the start command drops back to
-just `uv run procrastinate --app=health_worker.app worker`.
+The app tables must exist before the api can serve auth requests, so make sure this
+pre-deploy has run once after deploying M1.
 
 ## Environment variables
 
