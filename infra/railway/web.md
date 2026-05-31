@@ -3,8 +3,9 @@
 Next.js web app (`apps/web`).
 
 - **Root directory:** `apps/web` (self-contained; no workspace dependency).
-- **Build command:** `npm ci && npm run build`
-- **Start command:** `npm run start -- --port $PORT`
+- **Build / start commands:** none needed. Railpack auto-detects Next.js and builds and
+  starts it; `next start` binds to `$PORT`. Override only if that ever stops working
+  (`npm ci && npm run build` / `npm run start -- --port $PORT`).
 
 ## Environment variables
 

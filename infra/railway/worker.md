@@ -3,19 +3,23 @@
 Procrastinate background worker (`apps/worker`, package `health-worker`).
 
 - **Root directory:** repository root (`/`). Required for the uv workspace.
-- **Build command:** `uv sync --no-dev`
-- **Start command:** `uv run procrastinate --app=health_worker.app worker`
-
-## One-time database setup (before first run)
-
-Procrastinate needs its tables created in Postgres once. Run this as a pre-deploy /
-release command (or manually with `DATABASE_URL` set) before the worker starts:
+- **Build command:** Railpack default (`uv sync`). `uv sync --no-dev` also fine.
+- **Start command** (set in Settings -> Deploy):
 
 ```
-uv run procrastinate --app=health_worker.app schema --apply
+sh -c "uv run procrastinate --app=health_worker.app schema --apply || true; exec uv run procrastinate --app=health_worker.app worker"
 ```
 
-If the worker crash-loops on first deploy, this step has not been run yet.
+## Schema note (M0 shortcut)
+
+Procrastinate needs its queue tables created in Postgres once. The start command above
+applies the schema on first boot and harmlessly skips it on later boots (the `|| true`
+swallows the "already exists" error), then `exec`s the worker. This avoids a crash loop
+without needing CLI access for a one-off command.
+
+In M1 this is replaced by proper migrations (Alembic for app tables, `procrastinate`
+migrations for the queue) run as a pre-deploy step, and the start command drops back to
+just `uv run procrastinate --app=health_worker.app worker`.
 
 ## Environment variables
 
