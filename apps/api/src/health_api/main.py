@@ -8,7 +8,7 @@ from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from sqlalchemy import text
 
-from health_api import auth
+from health_api import api_keys, auth, ingest
 from health_api.config import get_settings
 from health_api.logging import configure_logging
 from health_db import get_engine
@@ -27,11 +27,13 @@ def create_app() -> FastAPI:
         # allow_credentials so the browser sends/stores the session cookie on calls from
         # the web origin. Requires an explicit origin list (not "*").
         allow_credentials=True,
-        allow_methods=["GET", "POST"],
+        allow_methods=["GET", "POST", "DELETE"],
         allow_headers=["*"],
     )
 
     app.include_router(auth.router)
+    app.include_router(api_keys.router)
+    app.include_router(ingest.router)
 
     @app.get("/healthz")
     def healthz() -> dict[str, str]:

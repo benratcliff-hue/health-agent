@@ -24,6 +24,21 @@ def hash_token(token: str) -> str:
     return hashlib.sha256(token.encode("utf-8")).hexdigest()
 
 
+# Visible prefix so a leaked key is recognizable and greppable in logs/configs.
+API_KEY_PREFIX = "hak_"
+
+
+def generate_api_key() -> str:
+    return API_KEY_PREFIX + secrets.token_urlsafe(32)
+
+
+def hash_api_key(key: str) -> str:
+    # Peppered with the app secret (PRD 11.2). Rotating SECRET_KEY invalidates existing
+    # keys, which is the intended yearly-rotation behaviour.
+    pepper = get_settings().secret_key
+    return hashlib.sha256(f"{pepper}:{key}".encode()).hexdigest()
+
+
 def create_session_token(user_id: str) -> str:
     settings = get_settings()
     now = datetime.now(UTC)
