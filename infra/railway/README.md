@@ -15,12 +15,20 @@ from the **repository root** (not `apps/api` / `apps/worker`), otherwise the
 `health-db` workspace dependency will not resolve. `web` is self-contained and builds
 from `apps/web`.
 
-## Builder uncertainty (verify when wiring)
+## Builder (verified 2026-05-30)
 
-Railway's default Nixpacks builder needs to recognise uv and the `uv.lock` file for the
-Python services. Confirm this at setup time. If Nixpacks does not build the workspace
-cleanly, the fallback is to add a small `Dockerfile` per Python service. Do not assume
-the build commands below "just work" until you have seen a green deploy.
+Railway builds these with **Railpack** (its current default builder), not Nixpacks.
+Railpack detected Python and uv at the repo root with no extra config, so no Dockerfile
+was needed.
+
+The one required step per Python service: set a **Custom Start Command** in the service
+UI (Settings -> Deploy). The repo-root `pyproject.toml` is a virtual workspace with no
+entrypoint, so Railpack cannot infer a start command, and because all three code
+services share one repo and root, a single repo-level start command (Procfile) would not
+work. Each service's command is listed in its file below.
+
+When generating a public domain, the target port is **8080** (`$PORT`'s default, which
+both uvicorn and `next start` bind to via the start commands).
 
 ## Service dependency / env wiring
 
