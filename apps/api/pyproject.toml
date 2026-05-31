@@ -8,6 +8,7 @@ dependencies = [
     "uvicorn[standard]",
     "pydantic-settings",
     "pyjwt>=2.8",
+    "procrastinate>=3.0",
     "health-db",
     "health-shared",
 ]

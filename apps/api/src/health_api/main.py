@@ -3,24 +3,45 @@
 from __future__ import annotations
 
 import logging
+from collections.abc import AsyncIterator
+from contextlib import asynccontextmanager
 
 from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from sqlalchemy import text
 
-from health_api import api_keys, auth, ingest
+from health_api import api_keys, auth, ingest, whoop
 from health_api.config import get_settings
 from health_api.logging import configure_logging
+from health_api.queue import get_queue_app
 from health_db import get_engine
 
 logger = logging.getLogger("health_api")
+
+
+@asynccontextmanager
+async def lifespan(_app: FastAPI) -> AsyncIterator[None]:
+    # Open the job-queue connection pool for the process lifetime. Tolerant of failure so
+    # the api can still serve /healthz when the database/queue is unavailable.
+    queue = get_queue_app()
+    opened = False
+    try:
+        await queue.open_async()
+        opened = True
+    except Exception:
+        logger.exception("could not open job queue; enqueueing will fail until fixed")
+    try:
+        yield
+    finally:
+        if opened:
+            await queue.close_async()
 
 
 def create_app() -> FastAPI:
     settings = get_settings()
     configure_logging(settings.log_level)
 
-    app = FastAPI(title="Personal Health Agent API", version="0.0.0")
+    app = FastAPI(title="Personal Health Agent API", version="0.0.0", lifespan=lifespan)
     app.add_middleware(
         CORSMiddleware,
         allow_origins=settings.cors_origins_list(),
@@ -34,6 +55,7 @@ def create_app() -> FastAPI:
     app.include_router(auth.router)
     app.include_router(api_keys.router)
     app.include_router(ingest.router)
+    app.include_router(whoop.router)
 
     @app.get("/healthz")
     def healthz() -> dict[str, str]:
