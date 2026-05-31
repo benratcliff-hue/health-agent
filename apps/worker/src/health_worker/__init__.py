@@ -15,12 +15,12 @@ import os
 
 from procrastinate import App, PsycopgConnector
 
-# conninfo is left empty when DATABASE_URL is unset so the module stays importable
-# (for linting/CI) without a database. The connection pool is opened lazily when the
-# worker actually runs, not at construction time.
-# NOTE: confirm the PsycopgConnector(kwargs={"conninfo": ...}) form against the pinned
-# procrastinate version on first `make dev`; this matches the 3.x docs pattern.
-app = App(connector=PsycopgConnector(kwargs={"conninfo": os.environ.get("DATABASE_URL", "")}))
+# PsycopgConnector forwards all extra kwargs straight to psycopg's AsyncConnectionPool,
+# so the connection string goes in as a top-level `conninfo`. Wrapping it in a `kwargs`
+# dict instead makes it a per-connection kwarg that collides with the pool's own
+# `conninfo` ("multiple values for argument 'conninfo'"). Empty string when DATABASE_URL
+# is unset keeps the module importable (lint/CI) since the pool opens lazily at run time.
+app = App(connector=PsycopgConnector(conninfo=os.environ.get("DATABASE_URL", "")))
 
 
 @app.task(name="noop")
