@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+import functools
+
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
@@ -19,5 +21,33 @@ class Settings(BaseSettings):
 
     log_level: str = "INFO"
 
+    # --- Auth ---
+    # Signs session JWTs. MUST be set to a strong random value in any deployed env; the
+    # dev default exists only so localhost works out of the box.
+    secret_key: str = "dev-insecure-change-me"
+    # Public base URL of this api, used to build the magic-link URL in emails.
+    api_base_url: str = "http://localhost:8000"
+    # Where to send the user after a successful magic-link login.
+    web_base_url: str = "http://localhost:3000"
+    magic_link_ttl_minutes: int = 15
+    session_ttl_days: int = 30
+    # Cookie flags. Locally we serve over http, so Secure must be off and SameSite=lax.
+    # In production (https, cross-site web<->api) set COOKIE_SECURE=true, COOKIE_SAMESITE=none.
+    cookie_secure: bool = False
+    cookie_samesite: str = "lax"
+    cookie_name: str = "ha_session"
+    # Emails permitted to bootstrap a login (no public sign-up; PRD non-goal). Comma-separated.
+    auth_allowed_emails: str = ""
+    # Household created for the first bootstrapped user.
+    household_name: str = "Household"
+
     def cors_origins_list(self) -> list[str]:
         return [origin.strip() for origin in self.cors_allow_origins.split(",") if origin.strip()]
+
+    def allowed_emails_set(self) -> set[str]:
+        return {e.strip().lower() for e in self.auth_allowed_emails.split(",") if e.strip()}
+
+
+@functools.lru_cache
+def get_settings() -> Settings:
+    return Settings()

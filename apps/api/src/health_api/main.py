@@ -8,7 +8,8 @@ from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from sqlalchemy import text
 
-from health_api.config import Settings
+from health_api import auth
+from health_api.config import get_settings
 from health_api.logging import configure_logging
 from health_db import get_engine
 
@@ -16,16 +17,21 @@ logger = logging.getLogger("health_api")
 
 
 def create_app() -> FastAPI:
-    settings = Settings()
+    settings = get_settings()
     configure_logging(settings.log_level)
 
     app = FastAPI(title="Personal Health Agent API", version="0.0.0")
     app.add_middleware(
         CORSMiddleware,
         allow_origins=settings.cors_origins_list(),
-        allow_methods=["GET"],
+        # allow_credentials so the browser sends/stores the session cookie on calls from
+        # the web origin. Requires an explicit origin list (not "*").
+        allow_credentials=True,
+        allow_methods=["GET", "POST"],
         allow_headers=["*"],
     )
+
+    app.include_router(auth.router)
 
     @app.get("/healthz")
     def healthz() -> dict[str, str]:

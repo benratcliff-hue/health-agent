@@ -34,5 +34,16 @@ select = ["E", "F", "I", "UP", "B"]
 # Our workspace packages, so the import sorter groups them as first-party.
 known-first-party = ["health_api", "health_db", "health_worker", "health_shared"]
 
+[tool.ruff.lint.flake8-bugbear]
+# FastAPI dependency injection relies on calling these in argument defaults (B008).
+extend-immutable-calls = [
+    "fastapi.Depends",
+    "fastapi.Query",
+    "fastapi.Path",
+    "fastapi.Header",
+    "fastapi.Cookie",
+    "fastapi.Body",
+]
+
 [tool.pytest.ini_options]
 testpaths = ["apps/api/tests"]

@@ -7,7 +7,9 @@ dependencies = [
     "fastapi",
     "uvicorn[standard]",
     "pydantic-settings",
+    "pyjwt>=2.8",
     "health-db",
+    "health-shared",
 ]
 
 [build-system]
