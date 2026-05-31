@@ -1,10 +1,11 @@
-"""Database package: engine factory now, SQLAlchemy models and migrations in M1.
+"""Database package: engine, session factory, declarative base, and models.
 
-Centralising the engine here (rather than in apps/api) means the worker and cron
-services connect the same way and there is a single place to evolve when models and
-Alembic migrations land in M1.
+Centralising these here means the api, worker, and cron services connect and model the
+data the same way, with one place for migrations to evolve.
 """
 
+from health_db.base import Base
 from health_db.engine import get_engine
+from health_db.session import get_sessionmaker
 
-__all__ = ["get_engine"]
+__all__ = ["Base", "get_engine", "get_sessionmaker"]
