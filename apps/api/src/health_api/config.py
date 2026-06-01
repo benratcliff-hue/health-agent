@@ -59,6 +59,12 @@ class Settings(BaseSettings):
     def allowed_emails_set(self) -> set[str]:
         return {e.strip().lower() for e in self.auth_allowed_emails.split(",") if e.strip()}
 
+    def cookie_samesite_value(self) -> str:
+        # Normalize so a stray space/quote/typo in the env var cannot 500 the login;
+        # Starlette only accepts these three. Fall back to the safe default otherwise.
+        value = self.cookie_samesite.strip().strip("\"'").lower()
+        return value if value in {"strict", "lax", "none"} else "lax"
+
 
 @functools.lru_cache
 def get_settings() -> Settings:
