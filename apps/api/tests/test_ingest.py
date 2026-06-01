@@ -22,6 +22,7 @@ _TZ = timezone(timedelta(hours=-7))
 def client():
     os.environ["SECRET_KEY"] = "test-secret"
     os.environ["AUTH_ALLOWED_EMAILS"] = ALLOWED_EMAIL
+    os.environ["WHOOP_CLIENT_SECRET"] = "whoop-test-secret"
 
     from fastapi.testclient import TestClient
 
@@ -114,3 +115,33 @@ def test_api_key_lifecycle_and_ingest(client, monkeypatch):
     assert client.delete(f"/v1/api-keys/{key_id}").status_code == 204
     revoked = client.post("/v1/ingest/healthkit", headers=headers, json=payload)
     assert revoked.status_code == 401
+
+
+def test_whoop_webhook_rejects_bad_signature(client):
+    resp = client.post(
+        "/v1/ingest/whoop/webhook",
+        content=b'{"user_id":"x"}',
+        headers={"X-WHOOP-Signature": "bad", "X-WHOOP-Signature-Timestamp": "1"},
+    )
+    assert resp.status_code == 401
+
+
+def test_whoop_webhook_valid_signature_unknown_user(client):
+    import base64
+    import hashlib
+    import hmac
+
+    secret = os.environ["WHOOP_CLIENT_SECRET"]
+    ts = "1700000000000"
+    body = b'{"user_id":"999999","id":"abc","type":"recovery.updated"}'
+    sig = base64.b64encode(
+        hmac.new(secret.encode(), ts.encode() + body, hashlib.sha256).digest()
+    ).decode()
+    resp = client.post(
+        "/v1/ingest/whoop/webhook",
+        content=body,
+        headers={"X-WHOOP-Signature": sig, "X-WHOOP-Signature-Timestamp": ts},
+    )
+    # Signature valid, but no device for that Whoop user -> acknowledged and ignored.
+    assert resp.status_code == 200
+    assert resp.json() == {"status": "ignored"}

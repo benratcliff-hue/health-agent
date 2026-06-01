@@ -7,6 +7,9 @@ enqueues a 30-day backfill. Webhooks and nightly catch-up sync are a separate ch
 
 from __future__ import annotations
 
+import base64
+import hashlib
+import hmac
 import logging
 from datetime import UTC, datetime, timedelta
 from urllib.parse import urlencode
@@ -57,6 +60,15 @@ def _read_state(state: str) -> str | None:
     except jwt.PyJWTError:
         return None
     return payload.get("sub") if payload.get("kind") == _STATE_KIND else None
+
+
+def verify_whoop_signature(secret: str, timestamp: str, raw_body: bytes, signature: str) -> bool:
+    """Verify a Whoop webhook: base64(HMAC-SHA256(timestamp + raw_body, client_secret))."""
+    if not secret or not timestamp or not signature:
+        return False
+    mac = hmac.new(secret.encode(), timestamp.encode() + raw_body, hashlib.sha256).digest()
+    expected = base64.b64encode(mac).decode()
+    return hmac.compare_digest(expected, signature)
 
 
 @router.get("/connect")

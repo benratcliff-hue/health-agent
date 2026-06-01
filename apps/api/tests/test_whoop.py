@@ -29,6 +29,22 @@ def test_oauth_state_roundtrip():
     assert _read_state("garbage.token.value") is None
 
 
+def test_whoop_signature():
+    import base64
+    import hashlib
+    import hmac
+
+    from health_api.whoop import verify_whoop_signature
+
+    secret, ts, body = "whoop-secret", "1700000000000", b'{"user_id":1}'
+    sig = base64.b64encode(
+        hmac.new(secret.encode(), ts.encode() + body, hashlib.sha256).digest()
+    ).decode()
+    assert verify_whoop_signature(secret, ts, body, sig) is True
+    assert verify_whoop_signature(secret, ts, body, "wrong") is False
+    assert verify_whoop_signature(secret, ts, b'{"user_id":2}', sig) is False  # tampered body
+
+
 def test_whoop_normalize():
     from health_worker.whoop import normalize
 

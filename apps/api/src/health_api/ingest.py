@@ -7,17 +7,22 @@ value_json rather than rejecting unknown shapes (PRD 8.1). Authenticated by API 
 
 from __future__ import annotations
 
+import json
 import logging
 from datetime import datetime
 from typing import Any
 
-from fastapi import APIRouter, Body, Depends
+from fastapi import APIRouter, Body, Depends, HTTPException, Request
 from sqlalchemy import select, tuple_
 from sqlalchemy.orm import Session
 
 from health_api.api_keys import get_ingest_user
+from health_api.config import get_settings
 from health_api.db import get_db
-from health_db.models import MetricSample, User
+from health_api.queue import defer
+from health_api.whoop import verify_whoop_signature
+from health_db.models import Device, MetricSample, User
+from health_shared.tasks import WHOOP_SYNC
 
 logger = logging.getLogger("health_api.ingest")
 
@@ -130,3 +135,34 @@ def ingest_healthkit(
         extra={"user_id": str(user.id), "accepted": accepted, "skipped": skipped},
     )
     return {"accepted": accepted, "skipped": skipped}
+
+
+@router.post("/whoop/webhook")
+async def whoop_webhook(request: Request, db: Session = Depends(get_db)) -> dict[str, str]:
+    """Receive a Whoop webhook, verify its signature, and enqueue a catch-up sync.
+
+    We do the minimum synchronously (verify + identify device + enqueue) and return fast;
+    the worker fetches the actual data, so a slow Whoop API never blocks the webhook.
+    """
+    settings = get_settings()
+    raw = await request.body()
+    if not verify_whoop_signature(
+        settings.whoop_client_secret,
+        request.headers.get("X-WHOOP-Signature-Timestamp", ""),
+        raw,
+        request.headers.get("X-WHOOP-Signature", ""),
+    ):
+        raise HTTPException(status_code=401, detail="invalid signature")
+
+    payload = json.loads(raw)
+    whoop_user_id = str(payload.get("user_id", ""))
+    device = db.scalar(
+        select(Device).where(Device.kind == "whoop", Device.external_id == whoop_user_id)
+    )
+    if device is None:
+        # 200 so Whoop does not retry forever for a user we do not have connected.
+        logger.info("whoop webhook for unknown user", extra={"whoop_user_id": whoop_user_id})
+        return {"status": "ignored"}
+
+    await defer(WHOOP_SYNC, device_id=str(device.id))
+    return {"status": "queued"}
