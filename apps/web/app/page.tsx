@@ -6,7 +6,9 @@
 // being explicit keeps the intent obvious.
 export const dynamic = "force-dynamic";
 
-const API_BASE = process.env.NEXT_PUBLIC_API_BASE_URL ?? "http://localhost:8000";
+// This is a Server Component, so it calls the backend directly (server-to-server) rather
+// than through the browser /api proxy.
+const API_BASE = process.env.API_ORIGIN ?? "http://localhost:8000";
 
 type ProbeResult = {
   ok: boolean;

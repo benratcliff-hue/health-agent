@@ -17,11 +17,11 @@ FastAPI backend (`apps/api`, package `health-api`).
 | `CORS_ALLOW_ORIGINS` | the `web` service public URL | Comma-separated; lets the browser call the api. |
 | `LOG_LEVEL` | `INFO` | Optional. |
 | `SECRET_KEY` | strong random string | Signs session JWTs. Required; do not ship the dev default. |
-| `API_BASE_URL` | this service's public URL | Used to build the magic-link URL in emails. |
+| `API_BASE_URL` | the `web` URL + `/api` | Builds the magic-link URL; routed through the web proxy so the login cookie is first-party. e.g. `https://<web>/api`. |
 | `WEB_BASE_URL` | the `web` service public URL | Post-login redirect target. |
 | `AUTH_ALLOWED_EMAILS` | your email(s), comma-separated | Who may bootstrap a login (no public sign-up). |
 | `COOKIE_SECURE` | `true` | Production is https. |
-| `COOKIE_SAMESITE` | `none` | web and api are different domains (cross-site cookie). |
+| `COOKIE_SAMESITE` | `lax` | The web proxy makes auth same-origin, so `lax` works (and is more robust than `none`). |
 | `RESEND_API_KEY` | Resend API key | Without it the api falls back to logging emails instead of sending. |
 | `EMAIL_FROM` | sender on a verified domain | e.g. `Health Agent <login@yourdomain>`. |
 | `ENCRYPTION_KEY` | Fernet key | Encrypts stored OAuth tokens. Generate your own; do not ship the dev default. |
@@ -29,10 +29,11 @@ FastAPI backend (`apps/api`, package `health-api`).
 | `WHOOP_REDIRECT_URI` | `https://<api>/v1/whoop/callback` | Must match the Whoop dev app exactly. |
 | `WHOOP_API_BASE` | `https://api.prod.whoop.com` | Default; override only for testing. |
 
-> **Cross-site cookie caveat:** with web and api on different Railway domains the session
-> cookie is third-party (`SameSite=None`), which Safari/ITP can restrict. If logins do
-> not stick in Safari, put both services under one parent domain (e.g. `app.x` and
-> `api.x`) so the cookie is first-party. Verify before relying on it.
+> **Same-origin auth:** the web app proxies `/api/*` to this service (apps/web
+> next.config.ts), so the browser only ever talks to the web origin and the session
+> cookie is first-party. This avoids the third-party-cookie blocking that browsers now do
+> by default. `API_BASE_URL` therefore points at the web `/api` path, not this service
+> directly.
 
 ## Verify after deploy
 

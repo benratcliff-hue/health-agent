@@ -6,7 +6,8 @@
 
 import { useEffect, useState } from "react";
 
-const API_BASE = process.env.NEXT_PUBLIC_API_BASE_URL ?? "http://localhost:8000";
+// Same-origin: proxied to the backend by next.config.ts so the session cookie is sent.
+const API_BASE = "/api";
 
 type Me = { id: string; email: string; name: string; role: string };
 
