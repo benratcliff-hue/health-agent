@@ -117,6 +117,22 @@ def test_api_key_lifecycle_and_ingest(client, monkeypatch):
     assert revoked.status_code == 401
 
 
+def test_existing_metric_keys_handles_huge_batch(client):
+    # Regression: a batch larger than Postgres's 65535 bind-param limit must not crash
+    # (HAE sent ~5MB and the un-chunked IN query 500'd). The chunked helper handles it.
+    from datetime import UTC, datetime, timedelta
+    from uuid import uuid4
+
+    from health_db import get_sessionmaker
+    from health_db.queries import existing_metric_keys
+
+    sm = get_sessionmaker(os.environ["DATABASE_URL"])
+    base = datetime(2026, 1, 1, tzinfo=UTC)
+    keys = [("heart_rate", base + timedelta(seconds=i)) for i in range(40000)]
+    with sm() as db:
+        assert existing_metric_keys(db, uuid4(), keys) == set()
+
+
 def test_whoop_webhook_rejects_bad_signature(client):
     resp = client.post(
         "/v1/ingest/whoop/webhook",
