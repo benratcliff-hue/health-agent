@@ -4,6 +4,7 @@ Holds cross-service concerns (e.g. email sending) and, later, shared types and t
 prompt templates from PRD Appendix A.
 """
 
+from health_shared.crypto import decrypt_json, encrypt_json
 from health_shared.email import (
     ConsoleEmailSender,
     EmailMessage,
@@ -18,4 +19,6 @@ __all__ = [
     "ConsoleEmailSender",
     "ResendEmailSender",
     "get_email_sender",
+    "encrypt_json",
+    "decrypt_json",
 ]

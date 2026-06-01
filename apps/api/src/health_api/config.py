@@ -41,6 +41,18 @@ class Settings(BaseSettings):
     # Household created for the first bootstrapped user.
     household_name: str = "Household"
 
+    # --- Encryption (M1) ---
+    # Fernet key for encrypting stored OAuth tokens (PRD 11.2). The dev default is a real
+    # but public key; generate your own for any deployed env:
+    #   python -c "from cryptography.fernet import Fernet; print(Fernet.generate_key().decode())"
+    encryption_key: str = "AoiLqfVpiKqQOSx-rO57uKQwAdoAuxZK-FAGmFj1OSg="
+
+    # --- Whoop (M1) ---
+    whoop_client_id: str = ""
+    whoop_client_secret: str = ""
+    whoop_redirect_uri: str = "http://localhost:8000/v1/whoop/callback"
+    whoop_api_base: str = "https://api.prod.whoop.com"
+
     def cors_origins_list(self) -> list[str]:
         return [origin.strip() for origin in self.cors_allow_origins.split(",") if origin.strip()]
 

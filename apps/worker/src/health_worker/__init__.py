@@ -15,6 +15,8 @@ import os
 
 from procrastinate import App, PsycopgConnector
 
+from health_shared.tasks import WHOOP_BACKFILL
+
 # PsycopgConnector forwards all extra kwargs straight to psycopg's AsyncConnectionPool,
 # so the connection string goes in as a top-level `conninfo`. Wrapping it in a `kwargs`
 # dict instead makes it a per-connection kwarg that collides with the pool's own
@@ -27,3 +29,12 @@ app = App(connector=PsycopgConnector(conninfo=os.environ.get("DATABASE_URL", "")
 def noop() -> str:
     """Does nothing useful; exists so M0 can enqueue and process one job."""
     return "ok"
+
+
+@app.task(name=WHOOP_BACKFILL)
+def whoop_backfill(device_id: str) -> int:
+    """Backfill trailing 30 days of Whoop data for a freshly connected device."""
+    # Imported here so the heavy client/deps load only when the task runs.
+    from health_worker import whoop
+
+    return whoop.run_backfill(device_id)

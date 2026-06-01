@@ -33,6 +33,9 @@ pre-deploy has run once after deploying M1.
 | Variable | Value | Notes |
 |---|---|---|
 | `DATABASE_URL` | reference from `postgres` | The queue lives in Postgres. |
+| `ENCRYPTION_KEY` | same Fernet key as the api | Decrypts OAuth tokens for Whoop sync. |
+| `WHOOP_CLIENT_ID` / `WHOOP_CLIENT_SECRET` | same as the api | Token refresh during backfill/sync. |
+| `WHOOP_API_BASE` | `https://api.prod.whoop.com` | Default. |
 
 ## Verify after deploy
 

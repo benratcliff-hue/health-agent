@@ -1,0 +1,46 @@
+"""Unit tests for the deterministic Whoop pieces.
+
+Crypto round-trip, OAuth state token, and record normalization are testable without a
+database or live Whoop access. The OAuth code exchange and backfill HTTP are validated
+live once Whoop developer credentials exist.
+"""
+
+import os
+
+from cryptography.fernet import Fernet
+
+
+def test_crypto_roundtrip():
+    from health_shared import decrypt_json, encrypt_json
+
+    key = Fernet.generate_key().decode()
+    data = {"access_token": "abc", "refresh_token": "def", "expires_in": 3600}
+    assert decrypt_json(key, encrypt_json(key, data)) == data
+
+
+def test_oauth_state_roundtrip():
+    os.environ["SECRET_KEY"] = "test-secret"
+    from health_api.config import get_settings
+    from health_api.whoop import _make_state, _read_state
+
+    get_settings.cache_clear()
+    state = _make_state("user-123")
+    assert _read_state(state) == "user-123"
+    assert _read_state("garbage.token.value") is None
+
+
+def test_whoop_normalize():
+    from health_worker.whoop import normalize
+
+    record = {
+        "start": "2026-05-31T08:00:00.000Z",
+        "score": {"recovery_score": 66, "resting_heart_rate": 52},
+    }
+    row = normalize("whoop_recovery", "recovery_score", record)
+    assert row is not None
+    assert row["metric_type"] == "whoop_recovery"
+    assert row["value_numeric"] == 66.0
+    assert row["value_json"] == record
+
+    # No usable timestamp -> dropped, not crashed.
+    assert normalize("whoop_recovery", "recovery_score", {"score": {}}) is None

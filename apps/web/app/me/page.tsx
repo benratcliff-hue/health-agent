@@ -55,6 +55,11 @@ export default function MePage() {
           <p>
             <a href="/settings/keys">Manage ingest API keys</a>
           </p>
+          <p>
+            {/* Top-level navigation so the session cookie (SameSite=Lax) is sent to the
+                api, which redirects on to Whoop's consent screen. */}
+            <a href={`${API_BASE}/v1/whoop/connect`}>Connect Whoop</a>
+          </p>
           <button onClick={logout} style={{ padding: "8px 16px" }}>
             Log out
           </button>
