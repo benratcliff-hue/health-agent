@@ -11,7 +11,7 @@ Next.js web app (`apps/web`).
 
 | Variable | Value | Notes |
 |---|---|---|
-| `NEXT_PUBLIC_API_BASE_URL` | the `api` service public URL | Inlined at **build** time; must be set before the build runs. |
+| `API_ORIGIN` | the `api` service public URL | The web app proxies `/api/*` to it (next.config.ts) so browser auth calls stay same-origin and the session cookie is first-party. Read at runtime. |
 
 ## Verify after deploy
 

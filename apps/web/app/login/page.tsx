@@ -6,7 +6,9 @@
 import { Suspense, useState } from "react";
 import { useSearchParams } from "next/navigation";
 
-const API_BASE = process.env.NEXT_PUBLIC_API_BASE_URL ?? "http://localhost:8000";
+// Same-origin: the Next server proxies /api/* to the backend (see next.config.ts), so
+// the session cookie stays first-party.
+const API_BASE = "/api";
 
 function LoginForm() {
   // The callback redirects here with ?error=invalid_link when a link is bad/expired.
