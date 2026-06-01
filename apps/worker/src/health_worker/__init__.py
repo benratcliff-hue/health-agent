@@ -15,7 +15,7 @@ import os
 
 from procrastinate import App, PsycopgConnector
 
-from health_shared.tasks import WHOOP_BACKFILL
+from health_shared.tasks import WHOOP_BACKFILL, WHOOP_SYNC
 
 # PsycopgConnector forwards all extra kwargs straight to psycopg's AsyncConnectionPool,
 # so the connection string goes in as a top-level `conninfo`. Wrapping it in a `kwargs`
@@ -38,3 +38,20 @@ def whoop_backfill(device_id: str) -> int:
     from health_worker import whoop
 
     return whoop.run_backfill(device_id)
+
+
+@app.task(name=WHOOP_SYNC)
+def whoop_sync(device_id: str) -> int:
+    """Short catch-up for one device, triggered by a Whoop webhook."""
+    from health_worker import whoop
+
+    return whoop.run_backfill(device_id, days=2)
+
+
+@app.periodic(cron="0 9 * * *")
+@app.task(name="whoop_nightly_sync")
+def whoop_nightly_sync(timestamp: int) -> int:
+    """Nightly safety net in case a webhook was missed (PRD 8.2). 09:00 UTC daily."""
+    from health_worker import whoop
+
+    return whoop.run_all_devices(days=2)
