@@ -29,6 +29,17 @@ def test_oauth_state_roundtrip():
     assert _read_state("garbage.token.value") is None
 
 
+def test_cookie_samesite_normalization():
+    from health_api.config import Settings
+
+    assert Settings(cookie_samesite="none").cookie_samesite_value() == "none"
+    assert Settings(cookie_samesite="None ").cookie_samesite_value() == "none"
+    assert Settings(cookie_samesite='"none"').cookie_samesite_value() == "none"
+    assert Settings(cookie_samesite="strict").cookie_samesite_value() == "strict"
+    # Anything unexpected falls back safely instead of crashing set_cookie.
+    assert Settings(cookie_samesite="bogus").cookie_samesite_value() == "lax"
+
+
 def test_whoop_signature():
     import base64
     import hashlib

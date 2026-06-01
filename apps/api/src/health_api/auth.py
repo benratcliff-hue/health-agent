@@ -78,7 +78,7 @@ def _set_session_cookie(response: Response, settings: Settings, token: str) -> N
         max_age=settings.session_ttl_days * 24 * 3600,
         httponly=True,
         secure=settings.cookie_secure,
-        samesite=settings.cookie_samesite,  # type: ignore[arg-type]
+        samesite=settings.cookie_samesite_value(),  # type: ignore[arg-type]
         path="/",
     )
 
