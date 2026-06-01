@@ -194,3 +194,13 @@ def run_backfill(device_id: str, days: int = 30) -> int:
         "whoop backfill complete", extra={"device_id": device_id, "accepted": accepted_total}
     )
     return accepted_total
+
+
+def run_all_devices(days: int = 2) -> int:
+    """Short catch-up sync across every connected Whoop device (nightly safety net)."""
+    sessionmaker = get_sessionmaker(_env("DATABASE_URL"))
+    with sessionmaker() as db:
+        device_ids = [
+            str(d.id) for d in db.scalars(select(Device).where(Device.kind == "whoop")).all()
+        ]
+    return sum(run_backfill(device_id, days=days) for device_id in device_ids)
