@@ -13,6 +13,7 @@ from __future__ import annotations
 from collections.abc import Sequence
 
 from alembic import op
+from sqlalchemy import text
 
 revision: str = "procrastinate_0001"
 down_revision: str | None = "05f5f2b3e6bf"
@@ -21,6 +22,13 @@ depends_on: str | Sequence[str] | None = None
 
 
 def upgrade() -> None:
+    # Skip if the queue schema already exists. The M0 deploy bootstrapped it out-of-band
+    # (worker `schema --apply`), so on that database the tables are present but unknown to
+    # Alembic; re-running the full CREATE would fail. On a fresh database it applies.
+    bind = op.get_bind()
+    if bind.execute(text("SELECT to_regclass('public.procrastinate_jobs')")).scalar() is not None:
+        return
+
     # Imported lazily so health_db itself never depends on procrastinate; only the
     # environment that runs migrations (the worker) needs it importable.
     from procrastinate.schema import SchemaManager
