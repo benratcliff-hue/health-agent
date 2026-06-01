@@ -13,7 +13,7 @@ from datetime import datetime
 from typing import Any
 
 from fastapi import APIRouter, Body, Depends, HTTPException, Request
-from sqlalchemy import select, tuple_
+from sqlalchemy import select
 from sqlalchemy.orm import Session
 
 from health_api.api_keys import get_ingest_user
@@ -22,6 +22,7 @@ from health_api.db import get_db
 from health_api.queue import defer
 from health_api.whoop import verify_whoop_signature
 from health_db.models import Device, MetricSample, User
+from health_db.queries import existing_metric_keys
 from health_shared.tasks import WHOOP_SYNC
 
 logger = logging.getLogger("health_api.ingest")
@@ -112,15 +113,7 @@ def ingest_healthkit(
             seen.add(key)
             deduped.append(row)
 
-    keys = list(seen)
-    existing = set(
-        db.execute(
-            select(MetricSample.metric_type, MetricSample.recorded_at).where(
-                MetricSample.user_id == user.id,
-                tuple_(MetricSample.metric_type, MetricSample.recorded_at).in_(keys),
-            )
-        ).all()
-    )
+    existing = existing_metric_keys(db, user.id, list(seen))
 
     accepted = 0
     for row in deduped:

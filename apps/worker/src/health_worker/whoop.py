@@ -14,10 +14,11 @@ from datetime import UTC, datetime, timedelta
 from typing import Any
 
 import httpx
-from sqlalchemy import select, tuple_
+from sqlalchemy import select
 
 from health_db import get_sessionmaker
 from health_db.models import Device, MetricSample
+from health_db.queries import existing_metric_keys
 from health_shared import decrypt_json, encrypt_json
 
 logger = logging.getLogger("health_worker.whoop")
@@ -134,14 +135,7 @@ def _store(db, user_id, rows: list[dict[str, Any]]) -> int:
     if not rows:
         return 0
     keys = {(r["metric_type"], r["recorded_at"]) for r in rows}
-    existing = set(
-        db.execute(
-            select(MetricSample.metric_type, MetricSample.recorded_at).where(
-                MetricSample.user_id == user_id,
-                tuple_(MetricSample.metric_type, MetricSample.recorded_at).in_(list(keys)),
-            )
-        ).all()
-    )
+    existing = existing_metric_keys(db, user_id, list(keys))
     accepted = 0
     seen: set[tuple[str, datetime]] = set()
     for row in rows:
