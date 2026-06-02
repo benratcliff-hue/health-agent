@@ -125,15 +125,20 @@ def request_magic_link(body: MagicLinkRequest, db: Session = Depends(get_db)) ->
     )
 
     link = f"{settings.api_base_url}/auth/callback?token={raw_token}"
-    get_email_sender().send(
-        EmailMessage(
-            to=user.email,
-            subject="Your Personal Health Agent login link",
-            html=f'<p>Click to sign in: <a href="{link}">{link}</a></p>'
-            f"<p>This link expires in {settings.magic_link_ttl_minutes} minutes.</p>",
-            text=f"Sign in: {link}\nExpires in {settings.magic_link_ttl_minutes} minutes.",
+    try:
+        get_email_sender().send(
+            EmailMessage(
+                to=user.email,
+                subject="Your Personal Health Agent login link",
+                html=f'<p>Click to sign in: <a href="{link}">{link}</a></p>'
+                f"<p>This link expires in {settings.magic_link_ttl_minutes} minutes.</p>",
+                text=f"Sign in: {link}\nExpires in {settings.magic_link_ttl_minutes} minutes.",
+            )
         )
-    )
+    except Exception:
+        # A delivery failure should not 500 the login request; log it (the email module
+        # logs the provider's reason) and report success so callers can't enumerate emails.
+        logger.exception("failed to send magic-link email", extra={"email": email})
     return {"sent": True}
 
 

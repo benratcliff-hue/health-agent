@@ -12,6 +12,8 @@ def test_resend_sender_payload(monkeypatch):
     captured: dict = {}
 
     class FakeResponse:
+        is_error = False
+
         def raise_for_status(self):
             pass
 

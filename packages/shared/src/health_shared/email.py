@@ -69,7 +69,13 @@ class ResendEmailSender:
             json=payload,
             timeout=15,
         )
-        resp.raise_for_status()
+        if resp.is_error:
+            # Surface Resend's reason (e.g. "domain not verified") instead of a bare status.
+            logger.error(
+                "resend send failed",
+                extra={"status": resp.status_code, "body": resp.text[:1000], "to": message.to},
+            )
+            resp.raise_for_status()
         logger.info("email sent (resend)", extra={"to": message.to, "subject": message.subject})
 
 
