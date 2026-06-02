@@ -54,6 +54,9 @@ export default function MePage() {
             Signed in as <strong>{me.name}</strong> ({me.email}), role {me.role}.
           </p>
           <p>
+            <a href="/chat">Chat with your coach</a>
+          </p>
+          <p>
             <a href="/settings/keys">Manage ingest API keys</a>
           </p>
           <p>

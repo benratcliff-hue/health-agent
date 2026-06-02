@@ -53,6 +53,13 @@ class Settings(BaseSettings):
     whoop_redirect_uri: str = "http://localhost:8000/v1/whoop/callback"
     whoop_api_base: str = "https://api.prod.whoop.com"
 
+    # --- Coach / LLM (M1) ---
+    # Without a key, the coach uses a deterministic stub (dev/tests). PRD 9.2: Haiku for
+    # daily chat; Sonnet reserved for the weekly review (M3).
+    anthropic_api_key: str | None = None
+    coach_model: str = "claude-haiku-4-5"
+    coach_max_tokens: int = 1024
+
     def cors_origins_list(self) -> list[str]:
         return [origin.strip() for origin in self.cors_allow_origins.split(",") if origin.strip()]
 
