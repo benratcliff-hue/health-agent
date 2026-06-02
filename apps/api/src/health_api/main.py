@@ -10,7 +10,7 @@ from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from sqlalchemy import text
 
-from health_api import api_keys, auth, briefings, chat, ingest, whoop
+from health_api import api_keys, auth, briefings, chat, ingest, meals, whoop
 from health_api.config import get_settings
 from health_api.logging import configure_logging
 from health_api.queue import get_queue_app
@@ -58,6 +58,7 @@ def create_app() -> FastAPI:
     app.include_router(whoop.router)
     app.include_router(chat.router)
     app.include_router(briefings.router)
+    app.include_router(meals.router)
 
     @app.get("/healthz")
     def healthz() -> dict[str, str]:

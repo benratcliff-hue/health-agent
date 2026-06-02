@@ -6,6 +6,7 @@ requires-python = ">=3.12"
 dependencies = [
     "fastapi",
     "uvicorn[standard]",
+    "python-multipart>=0.0.9",
     "pydantic-settings",
     "pyjwt>=2.8",
     "procrastinate>=3.0",
