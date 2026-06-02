@@ -30,15 +30,19 @@ DEFAULT_TONE = "supportive, concise, data-forward"
 
 # Briefing prompts (used by the worker in 5b-ii). The system prompt is the same coach
 # context; these are the "user" instruction that shapes the briefing.
+# Plain text (this goes in an email, which doesn't render markdown): short lines starting
+# with "- ", no bold/headers.
 BRIEFING_INSTRUCTION = {
     "morning": (
-        "Write a brief morning briefing (3-5 short markdown bullets): how I'm tracking "
-        "toward my goals, any notable change in the last day or two with the numbers, and "
-        "one concrete thing to focus on today. If data is thin, say so."
+        "Write a brief morning briefing as 3-5 short plain-text lines, each starting with "
+        "'- ' (no markdown bold or headers): how I'm tracking toward my goals, any notable "
+        "change in the last day or two with the numbers, and one concrete thing to focus on "
+        "today. If data is thin, say so."
     ),
     "evening": (
-        "Write a brief evening review (3-5 short markdown bullets): how today went against "
-        "my goals using the numbers, anything worth noting, and one suggestion for tomorrow. "
-        "If data is thin, say so."
+        "Write a brief evening review as 3-5 short plain-text lines, each starting with "
+        "'- ' (no markdown bold or headers): how today went against my goals using the "
+        "numbers, anything worth noting, and one suggestion for tomorrow. If data is thin, "
+        "say so."
     ),
 }

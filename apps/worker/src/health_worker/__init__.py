@@ -15,7 +15,7 @@ import os
 
 from procrastinate import App, PsycopgConnector
 
-from health_shared.tasks import WHOOP_BACKFILL, WHOOP_SYNC
+from health_shared.tasks import BRIEFING_GENERATE, WHOOP_BACKFILL, WHOOP_SYNC
 
 # PsycopgConnector forwards all extra kwargs straight to psycopg's AsyncConnectionPool,
 # so the connection string goes in as a top-level `conninfo`. Wrapping it in a `kwargs`
@@ -55,3 +55,23 @@ def whoop_nightly_sync(timestamp: int) -> int:
     from health_worker import whoop
 
     return whoop.run_all_devices(days=2)
+
+
+@app.task(name=BRIEFING_GENERATE)
+def generate_briefing_task(user_id: str, kind: str) -> None:
+    """Generate and email one user's morning/evening briefing."""
+    from health_worker import briefing
+
+    briefing.run_briefing(user_id, kind)
+
+
+@app.periodic(cron="*/15 * * * *")
+@app.task(name="dispatch_briefings")
+def dispatch_briefings_task(timestamp: int) -> int:
+    """Every 15 min: enqueue a briefing for each user whose 6am/8pm local time is due."""
+    from health_worker import briefing
+
+    due = briefing.dispatch_due_now()
+    for user_id, kind in due:
+        generate_briefing_task.defer(user_id=user_id, kind=kind)
+    return len(due)
