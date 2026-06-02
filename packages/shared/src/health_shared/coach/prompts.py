@@ -1,4 +1,4 @@
-"""Coach system prompt. Adapted from PRD Appendix A; iterate here, not in the PRD."""
+"""Coach prompts. Adapted from PRD Appendix A; iterate here, not in the PRD."""
 
 SYSTEM_TEMPLATE = """\
 You are {name}'s personal health coach.
@@ -27,3 +27,18 @@ Available context:
 Respond to the user's message."""
 
 DEFAULT_TONE = "supportive, concise, data-forward"
+
+# Briefing prompts (used by the worker in 5b-ii). The system prompt is the same coach
+# context; these are the "user" instruction that shapes the briefing.
+BRIEFING_INSTRUCTION = {
+    "morning": (
+        "Write a brief morning briefing (3-5 short markdown bullets): how I'm tracking "
+        "toward my goals, any notable change in the last day or two with the numbers, and "
+        "one concrete thing to focus on today. If data is thin, say so."
+    ),
+    "evening": (
+        "Write a brief evening review (3-5 short markdown bullets): how today went against "
+        "my goals using the numbers, anything worth noting, and one suggestion for tomorrow. "
+        "If data is thin, say so."
+    ),
+}

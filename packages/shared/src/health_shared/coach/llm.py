@@ -11,9 +11,7 @@ import logging
 from collections.abc import Iterator
 from typing import Protocol
 
-from health_api.config import Settings
-
-logger = logging.getLogger("health_api.coach")
+logger = logging.getLogger("health_shared.coach")
 
 # A chat turn: {"role": "user" | "assistant", "content": str}
 ChatMessage = dict[str, str]
@@ -89,12 +87,9 @@ class AnthropicCoach:
         return text, self._usage(msg.usage)
 
 
-def get_coach(settings: Settings) -> Coach:
-    if settings.anthropic_api_key:
-        return AnthropicCoach(
-            api_key=settings.anthropic_api_key,
-            model=settings.coach_model,
-            max_tokens=settings.coach_max_tokens,
-        )
-    logger.info("no ANTHROPIC_API_KEY set; using stub coach")
-    return StubCoach(model=settings.coach_model)
+def get_coach(api_key: str | None, model: str, max_tokens: int = 1024) -> Coach:
+    """Pick the coach by whether an API key is configured (else the stub)."""
+    if api_key:
+        return AnthropicCoach(api_key=api_key, model=model, max_tokens=max_tokens)
+    logger.info("no Anthropic API key; using stub coach")
+    return StubCoach(model=model)

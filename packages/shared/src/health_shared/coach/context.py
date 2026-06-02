@@ -2,8 +2,7 @@
 
 M1 grounds the coach in goals + a compact 7-day summary of metric_sample (the data we
 actually have from HAE and Whoop) plus recent conversation turns. Daily-summary rollups
-and z-score anomaly detection are a later enhancement; this keeps the coach grounded in
-real data today.
+and z-score anomaly detection are a later enhancement.
 """
 
 from __future__ import annotations
@@ -13,9 +12,9 @@ from datetime import UTC, datetime, timedelta
 from sqlalchemy import func, select
 from sqlalchemy.orm import Session
 
-from health_api.coach.llm import ChatMessage
-from health_api.coach.prompts import DEFAULT_TONE, SYSTEM_TEMPLATE
 from health_db.models import Conversation, Goal, Message, MetricSample, User
+from health_shared.coach.llm import ChatMessage
+from health_shared.coach.prompts import BRIEFING_INSTRUCTION, DEFAULT_TONE, SYSTEM_TEMPLATE
 
 HISTORY_LIMIT = 10
 
@@ -71,3 +70,9 @@ def load_history(db: Session, conversation: Conversation) -> list[ChatMessage]:
         .limit(HISTORY_LIMIT)
     ).all()
     return [{"role": m.role, "content": m.content} for m in reversed(rows)]
+
+
+def build_briefing(db: Session, user: User, kind: str) -> tuple[str, list[ChatMessage]]:
+    """(system, messages) for a morning/evening briefing."""
+    instruction = BRIEFING_INSTRUCTION[kind]
+    return build_system_prompt(db, user), [{"role": "user", "content": instruction}]

@@ -18,12 +18,12 @@ from pydantic import BaseModel
 from sqlalchemy.orm import Session
 
 from health_api.auth import get_current_user
-from health_api.coach.context import build_system_prompt, load_history
-from health_api.coach.llm import get_coach
 from health_api.config import get_settings
 from health_api.db import get_db
 from health_db import get_sessionmaker
 from health_db.models import Conversation, Message, User
+from health_shared.coach import get_coach
+from health_shared.coach.context import build_system_prompt, load_history
 
 logger = logging.getLogger("health_api.chat")
 
@@ -73,7 +73,9 @@ def chat(
 
     def generate() -> Iterator[str]:
         yield _sse({"conversation_id": conversation_id})
-        coach = get_coach(settings)
+        coach = get_coach(
+            settings.anthropic_api_key, settings.coach_model, settings.coach_max_tokens
+        )
         usage: dict = {}
         chunks: list[str] = []
         try:

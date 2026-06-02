@@ -354,7 +354,6 @@ name = "health-api"
 version = "0.0.0"
 source = { editable = "apps/api" }
 dependencies = [
-    { name = "anthropic" },
     { name = "fastapi" },
     { name = "health-db" },
     { name = "health-shared" },
@@ -366,7 +365,6 @@ dependencies = [
 
 [package.metadata]
 requires-dist = [
-    { name = "anthropic", specifier = ">=0.40" },
     { name = "fastapi" },
     { name = "health-db", editable = "packages/db" },
     { name = "health-shared", editable = "packages/shared" },
@@ -398,13 +396,17 @@ name = "health-shared"
 version = "0.0.0"
 source = { editable = "packages/shared" }
 dependencies = [
+    { name = "anthropic" },
     { name = "cryptography" },
+    { name = "health-db" },
     { name = "httpx" },
 ]
 
 [package.metadata]
 requires-dist = [
+    { name = "anthropic", specifier = ">=0.40" },
     { name = "cryptography", specifier = ">=42" },
+    { name = "health-db", editable = "packages/db" },
     { name = "httpx", specifier = ">=0.27" },
 ]
 
