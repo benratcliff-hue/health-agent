@@ -12,17 +12,19 @@ import logging
 from datetime import datetime
 from typing import Any
 
-from fastapi import APIRouter, Body, Depends, HTTPException, Request
+from fastapi import APIRouter, Body, Depends, File, Form, HTTPException, Request, UploadFile
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
 from health_api.api_keys import get_ingest_user
 from health_api.config import get_settings
 from health_api.db import get_db
+from health_api.meals import MealOut, _out, get_storage, store_meal
 from health_api.queue import defer
 from health_api.whoop import verify_whoop_signature
 from health_db.models import Device, MetricSample, User
 from health_db.queries import existing_metric_keys
+from health_shared import ObjectStorage
 from health_shared.tasks import WHOOP_SYNC
 
 logger = logging.getLogger("health_api.ingest")
@@ -128,6 +130,24 @@ def ingest_healthkit(
         extra={"user_id": str(user.id), "accepted": accepted, "skipped": skipped},
     )
     return {"accepted": accepted, "skipped": skipped}
+
+
+@router.post("/meal", status_code=201)
+def ingest_meal(
+    file: UploadFile = File(...),
+    eaten_at: str | None = Form(default=None),
+    note: str | None = Form(default=None),
+    user: User = Depends(get_ingest_user),
+    db: Session = Depends(get_db),
+    storage: ObjectStorage = Depends(get_storage),
+) -> MealOut:
+    """Meal photo upload from the Apple 'Log meal' Shortcut (API-key auth, PRD 8.3).
+
+    M1 stores the photo + a meal row; macro estimation is M2. The web app uploads via the
+    session-authed POST /v1/meals instead.
+    """
+    meal = store_meal(db, user, file, storage, source="shortcut", eaten_at=eaten_at, note=note)
+    return _out(meal, storage)
 
 
 @router.post("/whoop/webhook")

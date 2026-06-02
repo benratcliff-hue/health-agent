@@ -12,6 +12,13 @@ from health_shared.email import (
     ResendEmailSender,
     get_email_sender,
 )
+from health_shared.storage import (
+    ObjectStorage,
+    R2Storage,
+    StoredObject,
+    StubStorage,
+    get_object_storage,
+)
 
 __all__ = [
     "EmailMessage",
@@ -21,4 +28,9 @@ __all__ = [
     "get_email_sender",
     "encrypt_json",
     "decrypt_json",
+    "ObjectStorage",
+    "R2Storage",
+    "StubStorage",
+    "StoredObject",
+    "get_object_storage",
 ]

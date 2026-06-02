@@ -28,6 +28,9 @@ FastAPI backend (`apps/api`, package `health-api`).
 | `WHOOP_CLIENT_ID` / `WHOOP_CLIENT_SECRET` | from your Whoop dev app | OAuth + token refresh + webhook signature. |
 | `WHOOP_REDIRECT_URI` | `https://<api>/v1/whoop/callback` | Must match the Whoop dev app exactly. |
 | `WHOOP_API_BASE` | `https://api.prod.whoop.com` | Default; override only for testing. |
+| `ANTHROPIC_API_KEY` | Anthropic key | Coach (chat + briefings). Without it, a deterministic stub is used. |
+| `COACH_MODEL` | `claude-haiku-4-5` | Optional; daily coach + briefing model. |
+| `R2_ACCOUNT_ID` / `R2_ACCESS_KEY_ID` / `R2_SECRET_ACCESS_KEY` / `R2_BUCKET` | from Cloudflare R2 | Meal-photo storage. All four required; otherwise meal upload falls back to an in-memory stub (dev only). |
 
 > **Same-origin auth:** the web app proxies `/api/*` to this service (apps/web
 > next.config.ts), so the browser only ever talks to the web origin and the session

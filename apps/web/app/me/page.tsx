@@ -57,6 +57,9 @@ export default function MePage() {
             <a href="/chat">Chat with your coach</a>
           </p>
           <p>
+            <a href="/meals">Log a meal</a>
+          </p>
+          <p>
             <a href="/settings">Settings (timezone, coach tone)</a>
           </p>
           <p>

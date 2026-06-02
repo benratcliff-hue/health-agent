@@ -182,6 +182,28 @@ class Briefing(Base):
     delivery_channel: Mapped[str] = mapped_column(String(16), default="email")
 
 
+class Meal(Base):
+    __tablename__ = "meal"
+    # Last-N meals for a user, newest first (web list, coach context).
+    __table_args__ = (Index("ix_meal_user_eaten", "user_id", "eaten_at"),)
+
+    id: Mapped[uuid.UUID] = uuid_pk()
+    user_id: Mapped[uuid.UUID] = mapped_column(ForeignKey("user.id"))
+    # The object-storage key (PRD 7 calls this photo_url, but a presigned URL expires, so
+    # we store the durable key and mint a short-lived URL on read).
+    photo_key: Mapped[str] = mapped_column(String(512))
+    eaten_at: Mapped[datetime] = mapped_column(DateTime(timezone=True))
+    note: Mapped[str | None] = mapped_column(Text, nullable=True)
+    # Macro estimates are filled by the M2 vision pipeline; null on M1 basic ingest.
+    kcal_est: Mapped[int | None] = mapped_column(Integer, nullable=True)
+    protein_g: Mapped[float | None] = mapped_column(Float, nullable=True)
+    carbs_g: Mapped[float | None] = mapped_column(Float, nullable=True)
+    fat_g: Mapped[float | None] = mapped_column(Float, nullable=True)
+    items_json: Mapped[Any | None] = mapped_column(JSONB, nullable=True)
+    source: Mapped[str] = mapped_column(String(32))  # shortcut/web
+    created_at: Mapped[datetime] = created_at_column()
+
+
 class AuditLog(Base):
     __tablename__ = "audit_log"
 
@@ -217,6 +239,7 @@ __all__ = [
     "Conversation",
     "Message",
     "Briefing",
+    "Meal",
     "AuditLog",
     "MagicLinkToken",
 ]
