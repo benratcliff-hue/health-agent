@@ -48,7 +48,7 @@ def create_app() -> FastAPI:
         # allow_credentials so the browser sends/stores the session cookie on calls from
         # the web origin. Requires an explicit origin list (not "*").
         allow_credentials=True,
-        allow_methods=["GET", "POST", "DELETE"],
+        allow_methods=["GET", "POST", "DELETE", "PATCH"],
         allow_headers=["*"],
     )
 

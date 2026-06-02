@@ -52,8 +52,29 @@ def _extract_token(text: str) -> str:
     return match.group(1)
 
 
+def _login(client, monkeypatch):
+    sender = _CapturingSender()
+    monkeypatch.setattr("health_api.auth.get_email_sender", lambda: sender)
+    client.post("/auth/magic-link", json={"email": ALLOWED_EMAIL})
+    token = _extract_token(sender.messages[0].text)
+    client.get(f"/auth/callback?token={token}", follow_redirects=False)
+
+
 def test_me_requires_auth(client):
     assert client.get("/v1/me").status_code == 401
+
+
+def test_update_me_settings(client, monkeypatch):
+    _login(client, monkeypatch)
+
+    resp = client.patch("/v1/me", json={"timezone": "America/Los_Angeles", "coach_tone": "terse"})
+    assert resp.status_code == 200
+    body = resp.json()
+    assert body["timezone"] == "America/Los_Angeles"
+    assert body["coach_tone"] == "terse"
+
+    # Invalid timezone is rejected.
+    assert client.patch("/v1/me", json={"timezone": "Not/AZone"}).status_code == 400
 
 
 def test_full_magic_link_flow(client, monkeypatch):

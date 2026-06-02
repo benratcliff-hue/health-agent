@@ -9,8 +9,9 @@ from __future__ import annotations
 
 import logging
 from datetime import UTC, datetime, timedelta
+from zoneinfo import ZoneInfo
 
-from fastapi import APIRouter, Depends, Request, Response
+from fastapi import APIRouter, Depends, HTTPException, Request, Response
 from fastapi.responses import RedirectResponse
 from pydantic import BaseModel
 from sqlalchemy import select
@@ -43,6 +44,12 @@ class UserOut(BaseModel):
     role: str
     household_id: str
     coach_tone: str | None = None
+    timezone: str
+
+
+class MeUpdate(BaseModel):
+    coach_tone: str | None = None
+    timezone: str | None = None
 
 
 def _user_out(user: User) -> UserOut:
@@ -53,13 +60,12 @@ def _user_out(user: User) -> UserOut:
         role=user.role,
         household_id=str(user.household_id),
         coach_tone=user.coach_tone,
+        timezone=user.household.timezone,
     )
 
 
 def get_current_user(request: Request, db: Session = Depends(get_db)) -> User:
     """Resolve the logged-in user from the session cookie, or raise 401."""
-    from fastapi import HTTPException  # local import keeps the module's top imports lean
-
     settings = get_settings()
     token = request.cookies.get(settings.cookie_name)
     user_id = decode_session_token(token) if token else None
@@ -176,4 +182,23 @@ def logout() -> Response:
 
 @router.get("/v1/me")
 def me(user: User = Depends(get_current_user)) -> UserOut:
+    return _user_out(user)
+
+
+@router.patch("/v1/me")
+def update_me(
+    body: MeUpdate,
+    user: User = Depends(get_current_user),
+    db: Session = Depends(get_db),
+) -> UserOut:
+    """Update self-service settings: coach tone (per-user) and timezone (per-household)."""
+    if body.coach_tone is not None:
+        user.coach_tone = body.coach_tone.strip() or None
+    if body.timezone is not None:
+        try:
+            ZoneInfo(body.timezone)  # validate it's a real IANA zone
+        except Exception:
+            raise HTTPException(status_code=400, detail="invalid timezone") from None
+        user.household.timezone = body.timezone
+    db.flush()
     return _user_out(user)

@@ -57,6 +57,9 @@ export default function MePage() {
             <a href="/chat">Chat with your coach</a>
           </p>
           <p>
+            <a href="/settings">Settings (timezone, coach tone)</a>
+          </p>
+          <p>
             <a href="/settings/keys">Manage ingest API keys</a>
           </p>
           <p>
