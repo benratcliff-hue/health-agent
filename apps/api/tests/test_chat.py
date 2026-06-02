@@ -97,10 +97,10 @@ def test_context_builder(client):
 
     from sqlalchemy import select
 
-    from health_api.coach.context import build_system_prompt
     from health_api.config import get_settings
     from health_db import get_sessionmaker
     from health_db.models import Household, User
+    from health_shared.coach.context import build_system_prompt
 
     sm = get_sessionmaker(get_settings().database_url)
     with sm() as db:
