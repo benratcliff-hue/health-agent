@@ -24,7 +24,7 @@ export default function ChatPage() {
     setTurns((t) => [...t, { role: "user", content: message }, { role: "assistant", content: "" }]);
 
     try {
-      const res = await fetch(`${API_BASE}/chat`, {
+      const res = await fetch(`${API_BASE}/v1/chat`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         credentials: "include",
