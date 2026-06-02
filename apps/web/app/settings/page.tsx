@@ -24,6 +24,7 @@ function SettingsInner() {
   const [timezone, setTimezone] = useState("UTC");
   const [tone, setTone] = useState("");
   const [status, setStatus] = useState("");
+  const [testStatus, setTestStatus] = useState("");
 
   useEffect(() => {
     fetch(`${API_BASE}/v1/me`, { credentials: "include" })
@@ -47,6 +48,19 @@ function SettingsInner() {
       body: JSON.stringify({ timezone, coach_tone: tone }),
     });
     setStatus(res.ok ? "Saved." : `Error (${res.status})`);
+  }
+
+  async function sendTestBriefing() {
+    setTestStatus("Sending… (this takes a few seconds)");
+    try {
+      const res = await fetch(`${API_BASE}/v1/briefings/test`, {
+        method: "POST",
+        credentials: "include",
+      });
+      setTestStatus(res.ok ? "Sent. Check your email." : `Error (${res.status})`);
+    } catch {
+      setTestStatus("Error (request failed)");
+    }
   }
 
   return (
@@ -86,6 +100,20 @@ function SettingsInner() {
           <span style={{ color: "#666" }}>{status}</span>
         </div>
       </form>
+      <hr style={{ margin: "24px 0", border: 0, borderTop: "1px solid #eee" }} />
+      <section>
+        <h2 style={{ fontSize: 18 }}>Test briefing</h2>
+        <p style={{ color: "#666", marginTop: 4 }}>
+          Send yourself a morning briefing right now to preview what the scheduled emails
+          look like.
+        </p>
+        <div>
+          <button type="button" onClick={sendTestBriefing} style={{ padding: "8px 16px" }}>
+            Send a test briefing now
+          </button>{" "}
+          <span style={{ color: "#666" }}>{testStatus}</span>
+        </div>
+      </section>
     </main>
   );
 }

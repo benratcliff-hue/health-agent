@@ -1,13 +1,11 @@
-"""Morning/evening briefings: generation, email delivery, and due-time dispatch.
+"""Briefing scheduling + worker entrypoints.
 
-A periodic task (every 15 min) finds users whose 6am/8pm local briefing is due and enqueues
-one generate job per user; each job builds the coach context, generates the briefing on
-Haiku, stores it, and emails it. Idempotent per (user, kind, local day).
+Generation itself lives in health_shared.coach.briefing (shared with the api's on-demand
+test). This module owns the due-time logic and the worker task wiring.
 """
 
 from __future__ import annotations
 
-import html as html_lib
 import logging
 import os
 from datetime import UTC, datetime
@@ -17,14 +15,16 @@ from sqlalchemy import select
 
 from health_db import get_sessionmaker
 from health_db.models import Briefing, Household, User
-from health_shared import EmailMessage, get_email_sender
+from health_shared import get_email_sender
 from health_shared.coach import Coach, get_coach
-from health_shared.coach.context import build_briefing
+from health_shared.coach.briefing import generate_briefing
 
 logger = logging.getLogger("health_worker.briefing")
 
 MORNING_HOUR = 6
 EVENING_HOUR = 20
+
+__all__ = ["compute_due_kind", "run_briefing", "dispatch_due_now", "generate_briefing"]
 
 
 def compute_due_kind(local_dt: datetime) -> str | None:
@@ -44,33 +44,6 @@ def _coach() -> Coach:
         os.environ.get("COACH_MODEL", "claude-haiku-4-5"),
         int(os.environ.get("COACH_MAX_TOKENS", "1024")),
     )
-
-
-def _to_html(text: str) -> str:
-    return f'<div style="font-family:system-ui;white-space:pre-wrap">{html_lib.escape(text)}</div>'
-
-
-def generate_briefing(db, user: User, kind: str, coach: Coach, sender) -> Briefing:
-    """Generate, persist, and email one briefing. Coach + sender injected for testability."""
-    system, messages = build_briefing(db, user, kind)
-    text, usage = coach.complete(system, messages)
-
-    briefing = Briefing(user_id=user.id, kind=kind, content_md=text, delivery_channel="email")
-    db.add(briefing)
-    db.flush()
-
-    sender.send(
-        EmailMessage(
-            to=user.email,
-            subject=f"Your {kind} health briefing",
-            html=_to_html(text),
-            text=text,
-        )
-    )
-    briefing.delivered_at = datetime.now(UTC)
-    db.commit()
-    logger.info("briefing sent", extra={"user_id": str(user.id), "kind": kind, **usage})
-    return briefing
 
 
 def run_briefing(user_id: str, kind: str) -> None:

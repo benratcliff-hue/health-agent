@@ -91,6 +91,39 @@ def test_chat_streams_and_persists(client, monkeypatch):
     assert roles == ["user", "assistant"]
 
 
+def test_test_briefing_requires_auth(client):
+    client.cookies.clear()  # a prior test may have logged this module-scoped client in
+    assert client.post("/v1/briefings/test").status_code == 401
+
+
+def test_test_briefing_sends(client, monkeypatch):
+    _login(client, monkeypatch)
+
+    # Use the console sender so nothing leaves the test; just assert it ran end to end.
+    resp = client.post("/v1/briefings/test")
+    assert resp.status_code == 200
+    body = resp.json()
+    assert body == {"sent": True, "kind": "morning"}
+
+    # A Briefing row was persisted and marked delivered.
+    from sqlalchemy import select
+
+    from health_api.config import get_settings
+    from health_db import get_sessionmaker
+    from health_db.models import Briefing, User
+
+    sm = get_sessionmaker(get_settings().database_url)
+    with sm() as db:
+        user = db.scalar(select(User).where(User.email == ALLOWED_EMAIL))
+        briefing = db.scalar(
+            select(Briefing)
+            .where(Briefing.user_id == user.id, Briefing.kind == "morning")
+            .order_by(Briefing.generated_at.desc())
+        )
+    assert briefing is not None
+    assert briefing.delivered_at is not None
+
+
 def test_context_builder(client):
     # build_system_prompt should ground the prompt in goals + recent data headers.
     import uuid
