@@ -6,11 +6,13 @@
 import { useRef, useState } from "react";
 import ReactMarkdown from "react-markdown";
 
+import AuthGate from "../AuthGate";
+
 const API_BASE = "/api";
 
 type Turn = { role: "user" | "assistant"; content: string };
 
-export default function ChatPage() {
+function ChatInner() {
   const [turns, setTurns] = useState<Turn[]>([]);
   const [input, setInput] = useState("");
   const [busy, setBusy] = useState(false);
@@ -121,5 +123,13 @@ export default function ChatPage() {
         </button>
       </form>
     </main>
+  );
+}
+
+export default function ChatPage() {
+  return (
+    <AuthGate>
+      <ChatInner />
+    </AuthGate>
   );
 }

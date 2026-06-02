@@ -5,6 +5,8 @@
 
 import { useEffect, useState } from "react";
 
+import AuthGate from "../../AuthGate";
+
 // Same-origin: proxied to the backend by next.config.ts so the session cookie is sent.
 const API_BASE = "/api";
 
@@ -16,7 +18,7 @@ type Key = {
   revoked_at: string | null;
 };
 
-export default function ApiKeysPage() {
+function KeysInner() {
   const [state, setState] = useState<"loading" | "authed" | "anon">("loading");
   const [keys, setKeys] = useState<Key[]>([]);
   const [label, setLabel] = useState("iPhone HAE");
@@ -128,5 +130,13 @@ function Shell({ children }: { children: React.ReactNode }) {
       </p>
       {children}
     </main>
+  );
+}
+
+export default function ApiKeysPage() {
+  return (
+    <AuthGate>
+      <KeysInner />
+    </AuthGate>
   );
 }
