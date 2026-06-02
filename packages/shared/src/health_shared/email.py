@@ -43,10 +43,9 @@ class ConsoleEmailSender:
 
 
 class ResendEmailSender:
-    """Sends via the Resend HTTP API.
+    """Sends via the Resend HTTP API (POST /emails, Bearer auth).
 
-    NOTE: verify the request shape against current Resend docs before going live; this
-    path is not exercised by tests (it only runs when RESEND_API_KEY is set).
+    Request shape verified against Resend's send-email API; covered by test_email.py.
     """
 
     def __init__(self, api_key: str, sender: str) -> None:
