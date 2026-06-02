@@ -4,6 +4,7 @@
 // and reads the SSE stream, appending text deltas to the current assistant message.
 
 import { useRef, useState } from "react";
+import ReactMarkdown from "react-markdown";
 
 const API_BASE = "/api";
 
@@ -88,10 +89,23 @@ export default function ChatPage() {
               borderRadius: 8,
               padding: "8px 12px",
               maxWidth: "80%",
-              whiteSpace: "pre-wrap",
+              whiteSpace: t.role === "assistant" ? "normal" : "pre-wrap",
             }}
           >
-            {t.content || (busy && i === turns.length - 1 ? "…" : "")}
+            {t.role === "assistant" ? (
+              t.content ? (
+                // react-markdown escapes HTML by default, so model output can't inject markup.
+                <div className="md">
+                  <ReactMarkdown>{t.content}</ReactMarkdown>
+                </div>
+              ) : busy && i === turns.length - 1 ? (
+                "…"
+              ) : (
+                ""
+              )
+            ) : (
+              t.content
+            )}
           </div>
         ))}
       </div>
