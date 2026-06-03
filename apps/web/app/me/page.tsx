@@ -66,6 +66,9 @@ export default function MePage() {
             <a href="/settings/keys">Manage ingest API keys</a>
           </p>
           <p>
+            <a href="/admin/ingest">Ingest status</a>
+          </p>
+          <p>
             {/* Top-level navigation so the session cookie (SameSite=Lax) is sent to the
                 api, which redirects on to Whoop's consent screen. */}
             <a href={`${API_BASE}/v1/whoop/connect`}>Connect Whoop</a>
